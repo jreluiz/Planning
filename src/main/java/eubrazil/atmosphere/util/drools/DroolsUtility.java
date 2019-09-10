@@ -86,7 +86,7 @@ public class DroolsUtility {
 		KieContainer container = services.newKieContainer(services.getRepository().getDefaultReleaseId());
 		StatelessKieSession session = container.getKieBase().newStatelessKieSession();
 
-		return session;
+		return null;
 	}
 
 	/**

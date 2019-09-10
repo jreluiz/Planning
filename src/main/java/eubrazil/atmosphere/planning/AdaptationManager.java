@@ -1,23 +1,15 @@
 package eubrazil.atmosphere.planning;
 
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import eubr.atmosphere.tma.entity.qualitymodel.ActionRule;
 
 public class AdaptationManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdaptationManager.class);    
     
-	public static void performAdaptation(Set<ActionRule> action) {
+	public static void performAdaptation(String actions) {
 		LOGGER.info("Adaptation will be performed!");
-
-		for (ActionRule actionRule : action) {
-			System.out.println(actionRule.getActionName());
-		}
-		
+		System.out.println(actions);
 	}
 
 //    private static void addActionPlan(Plan plan, Action action) {

@@ -7,9 +7,10 @@ actions
 
 package eubrazil.atmosphere.templates;
 
-global eubr.atmosphere.tma.entity.qualitymodel.TrustworthinessObject;
+global eubr.atmosphere.tma.entity.qualitymodel.TrustworthinessObject trustworthinessObject;
 
 import java.text.SimpleDateFormat;
+import eubrazil.atmosphere.planning.AdaptationManager;
 import function eubrazil.atmosphere.util.drools.DroolsUtility.debug;
 
 dialect "java"

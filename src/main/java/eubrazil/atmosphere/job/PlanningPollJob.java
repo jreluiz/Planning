@@ -70,7 +70,7 @@ public class PlanningPollJob implements Job {
 		
 		// building drools rules dynamically
 		trustworthiness.initRules();
-		Map<CompositeAttribute, Set<Rule>> compositeRules = trustworthiness.buildRules(new PrivacyObject());
+		Map<CompositeAttribute, Set<Rule>> compositeRules = trustworthiness.buildRules(PrivacyObject.class.getName());
 		
 		Iterator<?> it = compositeRules.entrySet().iterator();
 	    while (it.hasNext()) {
@@ -78,6 +78,8 @@ public class PlanningPollJob implements Job {
 	        LOGGER.info(pair.getKey() + " = " + pair.getValue());
 	        
 	        Set<Rule> rules = (Set<Rule>) pair.getValue();
+	        
+	        //AdaptationManager.performAdaptation(@{actions});
 	        
 //	        for (Rule rule : rules) {
 //	        	System.out.println(rule.getConditions());
