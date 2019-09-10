@@ -1,0 +1,27 @@
+template header
+
+name
+object
+conditional
+actions
+
+package eubrazil.atmosphere.templates;
+
+global eubr.atmosphere.tma.entity.qualitymodel.TrustworthinessObject;
+
+import java.text.SimpleDateFormat;
+import function eubrazil.atmosphere.util.drools.DroolsUtility.debug;
+
+dialect "java"
+
+template "Trustworthiness"
+
+rule "@{name}"
+when
+    @{object}(@{conditional})
+then
+    AdaptationManager.performAdaptation(@{actions});
+	debug(drools);
+end
+
+end template
