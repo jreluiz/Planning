@@ -4,6 +4,7 @@ name
 object
 conditional
 actions
+priority
 
 package eubrazil.atmosphere.templates;
 
@@ -17,7 +18,9 @@ dialect "java"
 
 template "Trustworthiness"
 
-rule "@{name}"
+rule "@{name}" 
+enabled true
+salience @{priority}
 when
     @{object}(@{conditional})
 then

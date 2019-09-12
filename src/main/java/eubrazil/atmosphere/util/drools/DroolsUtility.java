@@ -39,6 +39,7 @@ import eubr.atmosphere.tma.entity.qualitymodel.Rule;
  * @since 1.0
  */
 public class DroolsUtility {
+	
 	/**
 	 * Loads a session to execute rules in memory using a template file.
 	 * 
@@ -86,7 +87,7 @@ public class DroolsUtility {
 		KieContainer container = services.newKieContainer(services.getRepository().getDefaultReleaseId());
 		StatelessKieSession session = container.getKieBase().newStatelessKieSession();
 
-		return null;
+		return session;
 	}
 
 	/**

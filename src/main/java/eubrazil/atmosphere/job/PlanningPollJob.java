@@ -27,6 +27,7 @@ import eubr.atmosphere.tma.entity.qualitymodel.ConfigurationProfile;
 import eubr.atmosphere.tma.entity.qualitymodel.Preference;
 import eubr.atmosphere.tma.entity.qualitymodel.PrivacyObject;
 import eubr.atmosphere.tma.entity.qualitymodel.Rule;
+import eubr.atmosphere.tma.entity.qualitymodel.TrustworthinessObject;
 import eubr.atmosphere.tma.utils.ListUtils;
 import eubrazil.atmosphere.config.quartz.SchedulerConfig;
 import eubrazil.atmosphere.qualitymodel.SpringContextBridge;
@@ -91,6 +92,15 @@ public class PlanningPollJob implements Job {
 			try {
 				StatelessKieSession session = utility.loadSession(rules,
 						"eubrazil/atmosphere/templates/Trustworthiness.drl");
+				
+				TrustworthinessObject to = new PrivacyObject();
+				to.setScore(0.5);
+				to.setThreshold(0.6);
+				((PrivacyObject) to).setPreviousScore(0.4);
+				
+				session.setGlobal("trustworthinessObject", to);
+				session.execute(to);
+				
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
