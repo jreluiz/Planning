@@ -1,10 +1,6 @@
 package eubrazil.atmosphere.job;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.kie.api.runtime.StatelessKieSession;
 import org.quartz.DisallowConcurrentExecution;
@@ -21,12 +17,9 @@ import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
 import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.stereotype.Component;
 
+import eubr.atmosphere.tma.entity.qualitymodel.Attribute;
 import eubr.atmosphere.tma.entity.qualitymodel.CompositeAttribute;
 import eubr.atmosphere.tma.entity.qualitymodel.ConfigurationProfile;
-import eubr.atmosphere.tma.entity.qualitymodel.HistoricalData;
-import eubr.atmosphere.tma.entity.qualitymodel.PrivacyObject;
-import eubr.atmosphere.tma.entity.qualitymodel.Rule;
-import eubr.atmosphere.tma.entity.qualitymodel.TrustworthinessObject;
 import eubr.atmosphere.tma.utils.ListUtils;
 import eubr.atmosphere.tma.utils.TreeUtils;
 import eubrazil.atmosphere.config.appconfig.PropertiesManager;
@@ -65,61 +58,42 @@ public class PlanningPollJob implements Job {
 		ConfigurationProfile configurationActor =  ListUtils.getFirstElement(configProfileList);
 		LOGGER.info("TrustworthinessQualityModel (TrustworthinessPollJob) - ConfigurationProfile: " + configurationActor);
 		
-		CompositeAttribute trustworthiness = TreeUtils.getInstance().getRootAttribute(configurationActor);
+		//get root attribute
+		Attribute trustworthinessAttribute = TreeUtils.getInstance().getRootAttribute(configurationActor);
+		//build dynamic attribute rules
+		trustworthinessAttribute.buildAttributeRules();
+		//compile and run attribute rules
+		executeAttributeRules(trustworthinessAttribute);
+
+		LOGGER.info("PlanningPollJob - end of execution..");
+	}
+	
+	public void executeAttributeRules(Attribute attr) {
 		
-		// building drools rules dynamically
-		trustworthiness.initRules();
-		Map<CompositeAttribute, List<Rule>> compositeRules = trustworthiness.buildRules(PrivacyObject.class.getName());
-		
-		Iterator<?> it = compositeRules.entrySet().iterator();
-	    while (it.hasNext()) {
-	        Map.Entry pair = (Map.Entry) it.next();
-	        LOGGER.info(pair.getKey() + " = " + pair.getValue());
-	        
-	        List<Rule> rules = (List<Rule>) pair.getValue();
-	        
+		if (attr != null && ListUtils.isNotEmpty(attr.getRules())) {
 	        //Create a session to operate Drools in memory
 			DroolsUtility utility = new DroolsUtility();
 			try {
-				StatelessKieSession session = utility.loadSession(rules,
-						PropertiesManager.getInstance().getProperty("template_rules"));
-				
-				CompositeAttribute ca = (CompositeAttribute) pair.getKey();
-				List<HistoricalData> historicalDataList = ca.getPreference().getAttribute().getHistoricaldata();
-				
-				// sort historical data list by instant
-				Comparator<HistoricalData> compareByInstant = (HistoricalData h1, HistoricalData h2) -> h1.getId()
-						.getInstant().compareTo(h2.getId().getInstant());
-				Collections.sort(historicalDataList, compareByInstant);
-				
-				// get last historical data element
-				HistoricalData lastHistoricalData = ListUtils.getLastElement(historicalDataList);
-				// get second last historical data element
-				HistoricalData secondLastHistoricalData = null;
-				try { 
-					secondLastHistoricalData = historicalDataList.get(ListUtils.size(historicalDataList) - 2);
-				} catch (IndexOutOfBoundsException e) {
-					LOGGER.info("Historical data has not second last element.");
-				}
-				
-				TrustworthinessObject to = new PrivacyObject();
-				to.setScore(lastHistoricalData.getValue());
-				to.setThreshold(ca.getPreference().getThreshold());
-				if (secondLastHistoricalData != null) {
-					((PrivacyObject) to).setPreviousScore(secondLastHistoricalData.getValue());
-				}
-				
-				session.setGlobal("trustworthinessObject", to);
-				session.execute(to);
-				
+				StatelessKieSession session = utility.loadSession(attr.getRules(), PropertiesManager.getInstance().getProperty("template_rules"));
+				session.setGlobal("attribute", attr);
+				session.execute(attr);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
+				// TODO Add logs
 				e.printStackTrace();
-			}    
-	        
-	    }
+			}
+		}
 		
-		LOGGER.info("PlanningPollJob - end of execution..");
+		//execute children rules
+		if (attr instanceof CompositeAttribute) {
+			CompositeAttribute ca = (CompositeAttribute) attr;
+			for (Attribute attributeChild : ca.getChildren()) {
+				if ( !attributeChild.equals(attr) ) {
+					// TODO: verificar peso dos attributos: executar primeiro o de maior peso?
+					executeAttributeRules(attributeChild);
+				}
+			}
+		}
+		
 	}
 	
 	@Bean(name = "jobBean1")

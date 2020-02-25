@@ -1,7 +1,7 @@
 template header
 
 name
-object
+attributeObject
 conditional
 actions
 priority
@@ -9,7 +9,7 @@ active
 
 package eubrazil.atmosphere.templates;
 
-global eubr.atmosphere.tma.entity.qualitymodel.TrustworthinessObject trustworthinessObject;
+global eubr.atmosphere.tma.entity.qualitymodel.Attribute attribute
 
 import java.text.SimpleDateFormat;
 import eubrazil.atmosphere.planning.AdaptationManager;
@@ -23,7 +23,7 @@ rule "@{name}"
 enabled @{active}
 salience @{priority}
 when
-    @{object}(@{conditional})
+    @{attributeObject}(@{conditional})
 then
     AdaptationManager.performAdaptation(@{actions});
 	debug(drools);

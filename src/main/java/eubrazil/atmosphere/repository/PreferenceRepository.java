@@ -16,6 +16,6 @@ public interface PreferenceRepository extends CrudRepository<Preference, Long> {
 	@Override
 	Iterable<Preference> findAll();
 	
-	@Query(value="select p from Preference p where p.attributeId = ?1")
+	@Query(value="select p from Preference p where p.attribute.attributeId = ?1")
     Preference findPreferenceById(int id);    
 }

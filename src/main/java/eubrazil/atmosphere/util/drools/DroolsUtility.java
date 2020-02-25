@@ -21,6 +21,7 @@ package eubrazil.atmosphere.util.drools;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.drools.core.spi.KnowledgeHelper;
 import org.drools.template.ObjectDataCompiler;
@@ -48,7 +49,7 @@ public class DroolsUtility {
 	 * @return Session for execution of rules.
 	 * @throws Exception
 	 */
-	public StatelessKieSession loadSession(List<Rule> rules, String templatePath) throws Exception {
+	public StatelessKieSession loadSession(Set<Rule> rules, String templatePath) throws Exception {
 		List<Map<String, Object>> maps = new ArrayList<Map<String, Object>>(rules.size());
 
 		for (Rule rule : rules) {
