@@ -1,5 +1,7 @@
 package eubrazil.atmosphere.job;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.kie.api.runtime.StatelessKieSession;
@@ -68,7 +70,7 @@ public class PlanningPollJob implements Job {
 		LOGGER.info("PlanningPollJob - end of execution..");
 	}
 	
-	public void executeAttributeRules(Attribute attr) {
+	private void executeAttributeRules(Attribute attr) {
 		
 		if (attr != null && ListUtils.isNotEmpty(attr.getRules())) {
 	        //Create a session to operate Drools in memory
@@ -78,17 +80,19 @@ public class PlanningPollJob implements Job {
 				session.setGlobal("attribute", attr);
 				session.execute(attr);
 			} catch (Exception e) {
-				// TODO Add logs
+				String msg = "PlanningPollJob - Error compiling and executing the attribute rules: " + attr.getName();
+				LOGGER.info(msg);
 				e.printStackTrace();
 			}
 		}
 		
 		//execute children rules
 		if (attr instanceof CompositeAttribute) {
-			CompositeAttribute ca = (CompositeAttribute) attr;
-			for (Attribute attributeChild : ca.getChildren()) {
+			List<Attribute> children = ((CompositeAttribute) attr).getChildren();
+			Comparator<Attribute> compareByWeight = (Attribute a1, Attribute a2) -> a1.getActivePreference().getWeight().compareTo(a2.getActivePreference().getWeight());
+			Collections.sort(children, Collections.reverseOrder(compareByWeight)); // executa primeiro o atributo com maior peso (weight de Preference)
+			for (Attribute attributeChild : children) {
 				if ( !attributeChild.equals(attr) ) {
-					// TODO: verificar peso dos attributos: executar primeiro o de maior peso?
 					executeAttributeRules(attributeChild);
 				}
 			}

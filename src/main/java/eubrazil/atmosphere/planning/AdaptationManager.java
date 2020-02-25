@@ -1,5 +1,8 @@
 package eubrazil.atmosphere.planning;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,7 +12,12 @@ public class AdaptationManager {
     
 	public static void performAdaptation(String actions) {
 		LOGGER.info("Adaptation will be performed!");
-		System.out.println(actions);
+		List<String> actionsIds = Arrays.asList(actions.split(","));
+		
+		for (String string : actionsIds) {
+			System.out.println(string);
+		}
+		
 	}
 
 //    private static void addActionPlan(Plan plan, Action action) {
@@ -24,13 +32,13 @@ public class AdaptationManager {
 //        plan.addAction(actionPlan);
 //    }
 //
-//    private static Plan createPlan() {
+//	private static Plan createPlan(MetricData metricData) {
 //        Plan plan = new Plan();
 //        plan.setValueTime(Instant.now().getEpochSecond());
 //
-//        plan.setMetricId(1);
-//        plan.setQualityModelId(1);
-//        plan.setStatus(PlanStatus.TO_DO);
+//        plan.setMetricId(metricData.getMetricId());
+//        plan.setValueTime(metricData.getValueTime());
+//        plan.setStatus(Plan.STATUS.TO_DO);
 //
 //        int planId = planManager.saveNewPlan(plan);
 //        plan.setPlanId(planId);

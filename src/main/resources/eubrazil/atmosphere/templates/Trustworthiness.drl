@@ -6,6 +6,7 @@ conditional
 actions
 priority
 active
+activationGroup
 
 package eubrazil.atmosphere.templates;
 
@@ -22,6 +23,7 @@ template "Trustworthiness"
 rule "@{name}" 
 enabled @{active}
 salience @{priority}
+activation-group @{activationGroup}
 when
     @{attributeObject}(@{conditional})
 then
