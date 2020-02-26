@@ -1,7 +1,9 @@
 package eubrazil.atmosphere.job;
 
+import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import org.kie.api.runtime.StatelessKieSession;
@@ -22,6 +24,8 @@ import org.springframework.stereotype.Component;
 import eubr.atmosphere.tma.entity.qualitymodel.Attribute;
 import eubr.atmosphere.tma.entity.qualitymodel.CompositeAttribute;
 import eubr.atmosphere.tma.entity.qualitymodel.ConfigurationProfile;
+import eubr.atmosphere.tma.entity.qualitymodel.Plan;
+import eubr.atmosphere.tma.entity.qualitymodel.Status;
 import eubr.atmosphere.tma.utils.ListUtils;
 import eubr.atmosphere.tma.utils.TreeUtils;
 import eubrazil.atmosphere.config.appconfig.PropertiesManager;
@@ -43,13 +47,13 @@ public class PlanningPollJob implements Job {
 
 	@Value("${trigger.job.time}")
 	private String triggerJobTime;
-
+	
 	@Override
 	public void execute(JobExecutionContext jobExecutionContext) {
 		LOGGER.info("PlanningPollJob - execution..");
 
-		TrustworthinessService trustworthinessService = SpringContextBridge.services().getTrustworthinessService();
 		Integer trustworthinessConfigProfileID = Integer.parseInt(PropertiesManager.getInstance().getProperty("trustworthiness_configuration_profile_id"));
+		TrustworthinessService trustworthinessService = SpringContextBridge.services().getTrustworthinessService();
 		List<ConfigurationProfile> configProfileList = trustworthinessService.findConfigurationProfileInstance(trustworthinessConfigProfileID);
 
 		if (ListUtils.isEmpty(configProfileList)) {
@@ -58,21 +62,29 @@ public class PlanningPollJob implements Job {
 		}
 
 		ConfigurationProfile configurationActor =  ListUtils.getFirstElement(configProfileList);
-		LOGGER.info("TrustworthinessQualityModel (TrustworthinessPollJob) - ConfigurationProfile: " + configurationActor);
+		LOGGER.info("(PlanningPollJob) TrustworthinessQualityModel - ConfigurationProfile: " + configurationActor);
 		
 		//get root attribute
 		Attribute trustworthinessAttribute = TreeUtils.getInstance().getRootAttribute(configurationActor);
 		//build dynamic attribute rules
 		trustworthinessAttribute.buildAttributeRules();
 		//compile and run attribute rules
-		executeAttributeRules(trustworthinessAttribute);
+		executeAttributeRules(trustworthinessAttribute, null);
 
 		LOGGER.info("PlanningPollJob - end of execution..");
 	}
 	
-	private void executeAttributeRules(Attribute attr) {
+	private void executeAttributeRules(Attribute attr, Plan plan) {
+		
+		if (plan == null) {
+			plan = createPlan();
+		}
 		
 		if (attr != null && ListUtils.isNotEmpty(attr.getRules())) {
+			
+			//configure plan
+			attr.setPlan(plan);
+			
 	        //Create a session to operate Drools in memory
 			DroolsUtility utility = new DroolsUtility();
 			try {
@@ -93,12 +105,24 @@ public class PlanningPollJob implements Job {
 			Collections.sort(children, Collections.reverseOrder(compareByWeight)); // executa primeiro o atributo com maior peso (weight de Preference)
 			for (Attribute attributeChild : children) {
 				if ( !attributeChild.equals(attr) ) {
-					executeAttributeRules(attributeChild);
+					executeAttributeRules(attributeChild, plan);
 				}
 			}
 		}
 		
 	}
+	
+	private Plan createPlan() {
+        Plan plan = new Plan();
+        plan.setValueTime(new Timestamp(new Date().getTime()));
+        plan.setStatus(Status.BUILDING.ordinal());
+
+        TrustworthinessService trustworthinessService = SpringContextBridge.services().getTrustworthinessService();
+        Plan createdPlan = trustworthinessService.saveNewPlan(plan);
+        plan.setPlanId(createdPlan.getPlanId());
+        
+        return plan;
+    }
 	
 	@Bean(name = "jobBean1")
 	public JobDetailFactoryBean job() {

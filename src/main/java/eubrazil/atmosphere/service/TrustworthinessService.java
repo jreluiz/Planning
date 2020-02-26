@@ -1,17 +1,14 @@
 package eubrazil.atmosphere.service;
 
 
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 
-import org.springframework.data.domain.Pageable;
-
-import eubr.atmosphere.tma.entity.plan.Plan;
+import eubr.atmosphere.tma.entity.qualitymodel.ActionPlan;
+import eubr.atmosphere.tma.entity.qualitymodel.ActionRule;
+import eubr.atmosphere.tma.entity.qualitymodel.ConfigurationData;
 import eubr.atmosphere.tma.entity.qualitymodel.ConfigurationProfile;
-import eubr.atmosphere.tma.entity.qualitymodel.Data;
-import eubr.atmosphere.tma.entity.qualitymodel.HistoricalData;
-import eubr.atmosphere.tma.entity.qualitymodel.Metric;
+import eubr.atmosphere.tma.entity.qualitymodel.Plan;
 
 /**
  * Trustworthiness services
@@ -19,19 +16,14 @@ import eubr.atmosphere.tma.entity.qualitymodel.Metric;
  */
 public interface TrustworthinessService {
 
-	public List<Data> getLimitedDataListById(Integer probeId, Integer descriptionId, Integer resourceId,
-			Pageable numSamples);
-	
-	public List<Data> getLimitedDataListByIdAndTimestamp(Integer probeId, Integer descriptionId, Integer resourceId, Date timestamp);
-
-	public void save(HistoricalData historicalData);
-
 	public List<ConfigurationProfile> findConfigurationProfileInstance(Integer configurationProfileID);
 
-	public Date getLastTimestampInsertedForMetrics(Set<Metric> metrics);
-	
-	public Double getInstanceValueById();
+	public Optional<ActionRule> findActionRuleById(Integer actionRuleId);
 
-	public Plan getPlanIdByMetricAndConfigurationProfile(Integer attributeId);
+	public Plan saveNewPlan(Plan plan);
+
+	public Optional<Plan> findPlanById(Integer planId);
+
+	public ActionPlan saveNewActionPlan(ActionPlan actionPlan);
 	
 }
