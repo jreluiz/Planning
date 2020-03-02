@@ -38,7 +38,7 @@ public class AdaptationManager {
 				Integer actionRuleId = Integer.parseInt(actionsIds.get(i));
 				ActionRule actionRule = trustworthinessService.findActionRuleById(actionRuleId).get();
 				
-				//saving ActionPlan
+				// saving ActionPlan
 				ActionPlan actionPlan = addActionPlan(plan, actionRule, i);
 				trustworthinessService.saveNewActionPlan(actionPlan);
 
