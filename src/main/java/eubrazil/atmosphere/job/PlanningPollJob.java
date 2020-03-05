@@ -74,6 +74,9 @@ public class PlanningPollJob implements Job {
 		LOGGER.info("PlanningPollJob - end of execution..");
 	}
 	
+	// TODO: Definir regras bases (do tipo score < threshold) para cada atributo
+	//       So habilitar regras de atributos filhos caso a regra base do atributo pai for verdadeira
+	
 	private void executeAttributeRules(Attribute attr, Plan plan) {
 		
 		if (plan == null) {
