@@ -5,7 +5,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.kie.api.runtime.StatelessKieSession;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
@@ -21,15 +24,20 @@ import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
 import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.stereotype.Component;
 
+import com.google.gson.Gson;
+
 import eubr.atmosphere.tma.entity.qualitymodel.Attribute;
 import eubr.atmosphere.tma.entity.qualitymodel.CompositeAttribute;
 import eubr.atmosphere.tma.entity.qualitymodel.ConfigurationProfile;
 import eubr.atmosphere.tma.entity.qualitymodel.Plan;
 import eubr.atmosphere.tma.entity.qualitymodel.Status;
 import eubr.atmosphere.tma.utils.ListUtils;
+import eubr.atmosphere.tma.utils.MessagePlanning;
 import eubr.atmosphere.tma.utils.TreeUtils;
 import eubrazil.atmosphere.config.appconfig.PropertiesManager;
 import eubrazil.atmosphere.config.quartz.SchedulerConfig;
+import eubrazil.atmosphere.kafka.ConsumerCreator;
+import eubrazil.atmosphere.kafka.kafkaManager;
 import eubrazil.atmosphere.qualitymodel.SpringContextBridge;
 import eubrazil.atmosphere.service.TrustworthinessService;
 import eubrazil.atmosphere.util.drools.DroolsUtility;
@@ -51,6 +59,23 @@ public class PlanningPollJob implements Job {
 	@Override
 	public void execute(JobExecutionContext jobExecutionContext) {
 		LOGGER.info("PlanningPollJob - execution..");
+		
+		ConsumerRecords<Long, String> consumerRecords = ConsumerCreator.getInstance().poll(1000);
+		LOGGER.info("ConsumerRecords: {}", consumerRecords.count());
+		
+		// Manipulate the records
+		consumerRecords.forEach(record -> {
+			processRecord(record);
+		});
+		
+		LOGGER.info("PlanningPollJob - end of execution..");
+	}
+
+	private void processRecord(ConsumerRecord<Long, String> record) {
+        String messageString = record.value();
+        MessagePlanning messagePlanning = new Gson().fromJson(messageString, MessagePlanning.class);
+        LOGGER.info(record.toString());
+        LOGGER.info("ConfigurationProfileId: {} / Offset: {}", messagePlanning.getConfigurationProfileId(), record.offset());
 
 		Integer trustworthinessConfigProfileID = Integer.parseInt(PropertiesManager.getInstance().getProperty("trustworthiness_configuration_profile_id"));
 		TrustworthinessService trustworthinessService = SpringContextBridge.services().getTrustworthinessService();
@@ -68,11 +93,12 @@ public class PlanningPollJob implements Job {
 		Attribute trustworthinessAttribute = TreeUtils.getInstance().getRootAttribute(configurationActor);
 		//build dynamic attribute rules
 		trustworthinessAttribute.buildAttributeRules();
-		//compile and run attribute rules
-		executeAttributeRules(trustworthinessAttribute, null);
-
-		LOGGER.info("PlanningPollJob - end of execution..");
-	}
+		//compile and run attribute rules building the adaptation plan
+		Integer planId = executeAttributeRulesBuildingAdaptationPlan(trustworthinessAttribute, null);
+		
+		// perform adaptation
+		performAdaptation(planId);
+    }
 	
 	// TODO: Definir regras bases (do tipo score < threshold) para cada atributo
 	//       So habilitar regras de atributos filhos caso a regra base do atributo pai for verdadeira
@@ -86,7 +112,7 @@ public class PlanningPollJob implements Job {
 //	serão ativadas somente se a regra base do atributo pai for ativado, ou seja: score < th para o atributo PRIVACY. Para mim não faz sentido 
 //	ativar uma regra em B, por exemplo, sem que a regra base (score < th) tenha sido ativada em A.
 	
-	private void executeAttributeRules(Attribute attr, Plan plan) {
+	private Integer executeAttributeRulesBuildingAdaptationPlan(Attribute attr, Plan plan) {
 		
 		if (plan == null) {
 			plan = createPlan();
@@ -119,11 +145,12 @@ public class PlanningPollJob implements Job {
 			Collections.sort(children, Collections.reverseOrder(compareByWeight)); // executes the attribute with the highest weight first (weight of Preference)
 			for (Attribute attributeChild : children) {
 				if ( !attributeChild.equals(attr) ) {
-					executeAttributeRules(attributeChild, plan);
+					executeAttributeRulesBuildingAdaptationPlan(attributeChild, plan);
 				}
 			}
 		}
 		
+		return plan.getPlanId();
 	}
 	
 	private Plan createPlan() {
@@ -136,6 +163,18 @@ public class PlanningPollJob implements Job {
         plan.setPlanId(createdPlan.getPlanId());
         
         return plan;
+    }
+	
+	private void performAdaptation(Integer planId) {
+        LOGGER.info("Adaptation will be performed!");
+        kafkaManager kafkaManager = new kafkaManager();
+        try {
+            kafkaManager.addItemKafka(planId.toString());
+        } catch (InterruptedException e) {
+            LOGGER.warn(e.getMessage(), e);
+        } catch (ExecutionException e) {
+            LOGGER.warn(e.getMessage(), e);
+        }
     }
 	
 	@Bean(name = "jobBean1")
