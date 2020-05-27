@@ -116,7 +116,7 @@ public class PlanningPollJob implements Job {
 		if (attr instanceof CompositeAttribute) {
 			List<Attribute> children = ((CompositeAttribute) attr).getChildren();
 			Comparator<Attribute> compareByWeight = (Attribute a1, Attribute a2) -> a1.getActivePreference().getWeight().compareTo(a2.getActivePreference().getWeight());
-			Collections.sort(children, Collections.reverseOrder(compareByWeight)); // executa primeiro o atributo com maior peso (weight de Preference)
+			Collections.sort(children, Collections.reverseOrder(compareByWeight)); // executes the attribute with the highest weight first (weight of Preference)
 			for (Attribute attributeChild : children) {
 				if ( !attributeChild.equals(attr) ) {
 					executeAttributeRules(attributeChild, plan);
