@@ -1,12 +1,15 @@
 package eubrazil.atmosphere.job;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.kie.api.runtime.StatelessKieSession;
@@ -52,23 +55,44 @@ import eubrazil.atmosphere.util.drools.DroolsUtility;
 public class PlanningPollJob implements Job {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
-
-	@Value("${trigger.job.time}")
-	private String triggerJobTime;
 	
 	@Override
 	public void execute(JobExecutionContext jobExecutionContext) {
-		LOGGER.info("PlanningPollJob - execution..");
 		
-		ConsumerRecords<Long, String> consumerRecords = ConsumerCreator.getInstance().poll(1000);
-		LOGGER.info("ConsumerRecords: {}", consumerRecords.count());
+		Consumer<Long, String> consumer = ConsumerCreator.createConsumer();
+        int noMessageFound = 0;
+        int maxNoMessageFoundCount = Integer.parseInt(
+                PropertiesManager.getInstance().getProperty("maxNoMessageFoundCount"));
 		
-		// Manipulate the records
-		consumerRecords.forEach(record -> {
-			processRecord(record);
-		});
-		
-		LOGGER.info("PlanningPollJob - end of execution..");
+		try {
+            while (true) {
+            	ConsumerRecords<Long, String> consumerRecords = consumer.poll(1000);
+
+                // 1000 is the time in milliseconds consumer will wait if no record is found at broker.
+                if (consumerRecords.count() == 0) {
+                    noMessageFound++;
+
+                    if (noMessageFound > maxNoMessageFoundCount) {
+                      // If no message found count is reached to threshold exit loop.
+                        sleep(2000);
+                    } else {
+                        continue;
+                    }
+                }
+
+                // Manipulate the records
+                consumerRecords.forEach(record -> {
+                	processRecord(record);
+                 });
+
+                // commits the offset of record to broker.
+                consumer.commitAsync();
+                sleep(5000);
+
+            }
+		} finally {
+            consumer.close();
+        }
 	}
 
 	private void processRecord(ConsumerRecord<Long, String> record) {
@@ -184,7 +208,31 @@ public class PlanningPollJob implements Job {
 
 	@Bean(name = "jobBean1Trigger")
 	public CronTriggerFactoryBean jobTrigger(@Qualifier("jobBean1") JobDetail jobDetail) {
-		return SchedulerConfig.createCronTrigger(jobDetail, triggerJobTime + " * * * * ?");
+		LocalDateTime now = LocalDateTime.now();
+		int second = now.getSecond();
+		int minute = now.getMinute() + 1;
+		int hour = now.getHour();
+		int dayOfMonth = now.getDayOfMonth();
+		int month = now.getMonthValue();
+		int year = now.getYear();
+		StringBuilder sb = new StringBuilder();
+		sb.append(second).append(" ");
+		sb.append(minute).append(" ");
+		sb.append(hour).append(" ");
+		sb.append(dayOfMonth).append(" ");
+		sb.append(month).append(" ");
+		sb.append("?").append(" ");
+		sb.append(year);
+		
+		return SchedulerConfig.createCronTrigger(jobDetail, sb.toString());
 	}
+	
+	private static void sleep(int millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
 }
