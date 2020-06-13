@@ -59,6 +59,8 @@ public class PlanningPollJob implements Job {
 	@Override
 	public void execute(JobExecutionContext jobExecutionContext) {
 		
+		LOGGER.info("---Starting planning execution--------------------------");
+		
 		Consumer<Long, String> consumer = ConsumerCreator.createConsumer();
         int noMessageFound = 0;
         int maxNoMessageFoundCount = Integer.parseInt(
