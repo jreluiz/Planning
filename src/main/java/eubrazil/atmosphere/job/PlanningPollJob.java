@@ -2,7 +2,6 @@ package eubrazil.atmosphere.job;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoField;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -20,7 +19,6 @@ import org.quartz.JobExecutionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
@@ -47,6 +45,18 @@ import eubrazil.atmosphere.util.drools.DroolsUtility;
 
 /**
  * Planning Poll Job
+ * 
+ * Define regras bases (do tipo score < threshold) para cada atributo.
+ * So habilita regras de atributos filhos caso a regra base do atributo pai for verdadeira
+	
+ * Todo atributo possui uma regra base que será score < threshold e outras regras que estendem dessa regra. 
+ * Por exemplo: para privacidade temos a regra base (no atributo PRIVACY) score < th e outras regras: score = score anterior 
+ * (com ações específicas = multiplicar k por 2) e score > score anterior (com ações específicas = incrementar k de 1) -> essas outras duas 
+ * regras estendem da regra base (score < th), ou seja, elas só serão ativadas se a regra base for verdadeira.
+
+ * Supondo que teremos condições/ações nos atributos INFORMATION_LOSS e REIDENTIFICATION_RISK (filhos de PRIVACY): então tais condições/ações 
+ * serão ativadas somente se a regra base do atributo pai for ativado, ou seja: score < th para o atributo PRIVACY.
+ * 
  * @author JorgeLuiz
  */
 @Component
@@ -125,18 +135,6 @@ public class PlanningPollJob implements Job {
 		// perform adaptation
 		performAdaptation(planId);
     }
-	
-	// TODO: Definir regras bases (do tipo score < threshold) para cada atributo
-	//       So habilitar regras de atributos filhos caso a regra base do atributo pai for verdadeira
-	
-//	Todo atributo possui uma regra base que será score < threshold e outras regras que estendem dessa regra. 
-//	Por exemplo: para privacidade temos a regra base (no atributo PRIVACY) score < th e outras regras: score = score anterior 
-//	(com ações específicas = multiplicar k por 2) e score > score anterior (com ações específicas = incrementar k de 1) -> essas outras duas 
-//	regras estendem da regra base (score < th), ou seja, elas só serão ativadas se a regra base for verdadeira.
-//
-//	Supondo que teremos condições/ações nos atributos INFORMATION_LOSS e REIDENTIFICATION_RISK (filhos de PRIVACY): então tais condições/ações 
-//	serão ativadas somente se a regra base do atributo pai for ativado, ou seja: score < th para o atributo PRIVACY. Para mim não faz sentido 
-//	ativar uma regra em B, por exemplo, sem que a regra base (score < th) tenha sido ativada em A.
 	
 	private Integer executeAttributeRulesBuildingAdaptationPlan(Attribute attr, Plan plan) {
 		
