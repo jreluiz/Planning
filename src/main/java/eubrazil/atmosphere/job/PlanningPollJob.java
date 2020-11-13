@@ -160,8 +160,7 @@ public class PlanningPollJob implements Job {
 			}
 		}
 		
-		// TODO Verify that all rules (of attributes) have been executed (RULE ATTRIBUTE STATUS), and change the PLAN STATUS
-		
+		// Verify that all rules (of attributes) have been executed (RULE ATTRIBUTE STATUS), and change the PLAN STATUS
 		//execute children rules
 		if (attr instanceof CompositeAttribute) {
 			List<Attribute> children = ((CompositeAttribute) attr).getChildren();
