@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import eubr.atmosphere.tma.entity.qualitymodel.ActionPlan;
 import eubr.atmosphere.tma.entity.qualitymodel.ActionRule;
-import eubr.atmosphere.tma.entity.qualitymodel.ConfigurationData;
 import eubr.atmosphere.tma.entity.qualitymodel.ConfigurationProfile;
 import eubr.atmosphere.tma.entity.qualitymodel.Plan;
 
@@ -20,7 +19,7 @@ public interface TrustworthinessService {
 
 	public Optional<ActionRule> findActionRuleById(Integer actionRuleId);
 
-	public Plan saveNewPlan(Plan plan);
+	public Plan savePlan(Plan plan);
 
 	public Optional<Plan> findPlanById(Integer planId);
 

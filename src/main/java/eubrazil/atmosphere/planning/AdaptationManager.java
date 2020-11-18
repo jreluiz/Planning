@@ -11,7 +11,7 @@ import eubr.atmosphere.tma.entity.qualitymodel.ActionRule;
 import eubr.atmosphere.tma.entity.qualitymodel.Configuration;
 import eubr.atmosphere.tma.entity.qualitymodel.ConfigurationData;
 import eubr.atmosphere.tma.entity.qualitymodel.Plan;
-import eubr.atmosphere.tma.entity.qualitymodel.Status;
+import eubr.atmosphere.tma.entity.qualitymodel.PlanStatus;
 import eubr.atmosphere.tma.utils.ListUtils;
 import eubrazil.atmosphere.qualitymodel.SpringContextBridge;
 import eubrazil.atmosphere.service.TrustworthinessService;
@@ -30,7 +30,7 @@ public class AdaptationManager {
 		Plan plan = trustworthinessService.findPlanById(Integer.parseInt(planId)).get();
 
 		List<String> actionsIds = Arrays.asList(ListUtils.getLastElement(Arrays.asList(actions.split(":"))).split(","));
-		if ( ListUtils.isNotEmpty(actionsIds) ) {  // TODO verificar se a ordem das acoes esta correta
+		if ( ListUtils.isNotEmpty(actionsIds) ) {
 			
 			for (int i = 0; i < actionsIds.size(); i++) {
 				
@@ -48,7 +48,7 @@ public class AdaptationManager {
 	}
 	
 	private static ActionPlan addActionPlan(Plan plan, ActionRule actionRule, int executionOrder) {
-        ActionPlan actionPlan = new ActionPlan(plan.getPlanId(), actionRule.getActionRuleId(), executionOrder, Status.TO_DO.ordinal());
+        ActionPlan actionPlan = new ActionPlan(plan.getPlanId(), actionRule.getActionRuleId(), executionOrder, PlanStatus.READY_TO_RUN.ordinal());
         
         // adding configurations data to actionPlan
         for (Configuration config: actionRule.getConfigurations()) {

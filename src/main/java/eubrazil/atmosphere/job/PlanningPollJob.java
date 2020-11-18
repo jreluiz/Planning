@@ -31,7 +31,7 @@ import eubr.atmosphere.tma.entity.qualitymodel.Attribute;
 import eubr.atmosphere.tma.entity.qualitymodel.CompositeAttribute;
 import eubr.atmosphere.tma.entity.qualitymodel.ConfigurationProfile;
 import eubr.atmosphere.tma.entity.qualitymodel.Plan;
-import eubr.atmosphere.tma.entity.qualitymodel.Status;
+import eubr.atmosphere.tma.entity.qualitymodel.PlanStatus;
 import eubr.atmosphere.tma.utils.ListUtils;
 import eubr.atmosphere.tma.utils.MessagePlanning;
 import eubr.atmosphere.tma.utils.TreeUtils;
@@ -128,9 +128,15 @@ public class PlanningPollJob implements Job {
 		//get root attribute
 		Attribute trustworthinessAttribute = TreeUtils.getInstance().getRootAttribute(configurationActor);
 		//build dynamic attribute rules
+		long startTime = System.currentTimeMillis();
 		trustworthinessAttribute.buildAttributeRules();
+		long stopTime = System.currentTimeMillis();
+		LOGGER.info("Time to build dynamic attribute rules: " + ((stopTime - startTime) / 1000F) + "s");
 		//compile and run attribute rules building the adaptation plan
+		startTime = System.currentTimeMillis();
 		Integer planId = executeAttributeRulesBuildingAdaptationPlan(trustworthinessAttribute, null);
+		stopTime = System.currentTimeMillis();
+		LOGGER.info("Time to compile and run attribute rules building the adaptation plan: " + ((stopTime - startTime) / 1000F) + "s");
 		
 		// perform adaptation
 		performAdaptation(planId);
@@ -160,7 +166,6 @@ public class PlanningPollJob implements Job {
 			}
 		}
 		
-		// Verify that all rules (of attributes) have been executed (RULE ATTRIBUTE STATUS), and change the PLAN STATUS
 		//execute children rules
 		if (attr instanceof CompositeAttribute) {
 			List<Attribute> children = ((CompositeAttribute) attr).getChildren();
@@ -172,6 +177,11 @@ public class PlanningPollJob implements Job {
 				}
 			}
 		}
+
+		// All rules (of attributes) have been executed (RULE ATTRIBUTE STATUS), and change the PLAN STATUS
+		plan.setStatus(PlanStatus.READY_TO_RUN.ordinal());
+		TrustworthinessService trustworthinessService = SpringContextBridge.services().getTrustworthinessService();
+		trustworthinessService.savePlan(plan);
 		
 		return plan.getPlanId();
 	}
@@ -179,10 +189,10 @@ public class PlanningPollJob implements Job {
 	private Plan createPlan() {
         Plan plan = new Plan();
         plan.setValueTime(new Timestamp(new Date().getTime()));
-        plan.setStatus(Status.BUILDING.ordinal());
+        plan.setStatus(PlanStatus.BUILDING.ordinal());
 
         TrustworthinessService trustworthinessService = SpringContextBridge.services().getTrustworthinessService();
-        Plan createdPlan = trustworthinessService.saveNewPlan(plan);
+        Plan createdPlan = trustworthinessService.savePlan(plan);
         plan.setPlanId(createdPlan.getPlanId());
         
         return plan;

@@ -50,7 +50,7 @@ public class TrustworthinessServiceImpl implements TrustworthinessService {
 	}
 	
 	@Override
-	public Plan saveNewPlan(Plan plan) {
+	public Plan savePlan(Plan plan) {
 		return planRepository.save(plan);
 	}
 	
