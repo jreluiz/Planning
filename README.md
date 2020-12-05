@@ -24,11 +24,24 @@ leaf_rule_name extends composite_rule_name
 
 This ensures that Drools will run the leaf_rule only if the composite_rule is satisfied.
 
-When starting the process of building the adaptation rules, the Planner component loads the quality model stored in the Knowledge component, containing all monitored attributes, as well as the rules hierarchy with its conditions and related actions to each attribute. Then, Planner runs through the entire model (starting from the root), building the rules for each attribute.
+When starting the process of building the adaptation rules, the Planner component loads the quality model stored in the Knowledge component, containing all monitored attributes, as well as the rules hierarchy with its conditions and related actions to each attribute. Then, the Planner runs through the entire model (starting from the root), building the rules for each attribute.
 
 
-After building the entire hierarchy of rules (with their conditions and actions) for each attribute of the quality model, the Planner component starts the compilation and execution process. Initially, it creates a new Adaptation Plan with status BUILDING, indicating that it is under construction. The execution of the rules starts from the root to the leaf attributes of the quality model. For each attribute, Planner creates a session (Knowledge Session) to operate Drools in memory. The creation of the session is done dynamically, since it uses as a parameter the rules (hierarchy built previously) associated with each attribute (attr.getRules ()) and the rules template defined:
+After building the entire hierarchy of rules (with their conditions and actions) for each attribute of the quality model, the Planner component starts the compilation and execution process. Initially, it creates a new Adaptation Plan with status BUILDING, indicating that it is under construction. The execution of the rules starts from the root to the leaf attributes of the quality model. For each attribute, the Planner creates a session (Knowledge Session) to operate Drools in memory. The creation of the session is done dynamically, since it uses as a parameter the rules (hierarchy built previously) associated with each attribute (attr.getRules ()) and the rules template defined:
 
 ```java
 StatelessKieSession session = utility.loadSession(attr.getRules(), PropertiesManager.getInstance().getProperty("template_rules"));
 ```
+After the session is created, the Planner sets the global variable of template, that is, the object that contains the data or facts used in the execution of the rules:
+
+```java
+session.setGlobal("attribute", attr);
+```
+
+Once configured, the rules can be executed. This is done taking into account the data or facts of the attribute in question, that is, the values of score computed in the current and previous MAPE-K cycle, as well as the value of the threshold:
+
+```java
+session.execute(attr);
+```
+
+Attributes with higher weight values located at the same level as the quality model have a higher priority and their rules are executed first. The evaluation of conditions related to the rules of a given attribute considers values of scores (current and previous MAPE-K cycle) and thresholds. As the rules are executed and the conditions are satisfied, the related actions are added to the current plan until it is ready for execution, that is, when the status of the plan is changed to READY_TO_RUN}. Once completed, the created plan identifier is sent to the kafka topic (topic_execute) to be executed by the Execute component.
