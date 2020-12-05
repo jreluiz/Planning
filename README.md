@@ -19,5 +19,7 @@ During the generation process, concrete rules regarding each attribute of the qu
 The rules hierarchy is built based on the name of the rules, using the reserved word **extends**, for example:
 
 ```txt
-leaf_rule_name **extends** composite_rule_name}
+leaf_rule_name extends composite_rule_name
 ```
+
+This ensures that Drools will run the leaf_rule only if the composite_rule is satisfied.
