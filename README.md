@@ -23,3 +23,12 @@ leaf_rule_name extends composite_rule_name
 ```
 
 This ensures that Drools will run the leaf_rule only if the composite_rule is satisfied.
+
+When starting the process of building the adaptation rules, the Planner component loads the quality model stored in the Knowledge component, containing all monitored attributes, as well as the rules hierarchy with its conditions and related actions to each attribute. Then, Planner runs through the entire model (starting from the root), building the rules for each attribute.
+
+
+After building the entire hierarchy of rules (with their conditions and actions) for each attribute of the quality model, the Planner component starts the compilation and execution process. Initially, it creates a new Adaptation Plan with status BUILDING, indicating that it is under construction. The execution of the rules starts from the root to the leaf attributes of the quality model. For each attribute, Planner creates a session (Knowledge Session) to operate Drools in memory. The creation of the session is done dynamically, since it uses as a parameter the rules (hierarchy built previously) associated with each attribute (attr.getRules ()) and the rules template defined:
+
+```java
+StatelessKieSession session = utility.loadSession(attr.getRules(), PropertiesManager.getInstance().getProperty("template_rules"));
+```
