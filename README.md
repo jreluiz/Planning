@@ -1,4 +1,4 @@
-## Planner based on quality models for cloud platforms.
+## Planner based on quality models for cloud platforms
 
 There are several mechanisms to support the adaptation decision, such as models, rules/policies, objectives or utility. 
 This work uses rules/policies for the dynamic creation of adaptation plans at runtime. 
@@ -14,4 +14,4 @@ The use of templates has become a strong attraction for systems whose rules have
 As the rules defined in the Planner infrastructure (below, in gray) have a common structure, the implementation defines a template of Drools rules to create the rules at runtime. 
 During the generation process, concrete rules regarding each attribute of the quality model are loaded from the Knowledge component and built dynamically.
 
-![Complete quality metamodel to be used in knowledge](https://github.com/jreluiz/tma-framework-k/blob/master/database/new/quality_metamodel_and_planner_infrastructure.png)
+![Complete quality metamodel to be used in knowledge](https://github.com/jreluiz/tma-framework-k/blob/master/database/new/models/quality_metamodel_and_planner_infrastructure.png)
